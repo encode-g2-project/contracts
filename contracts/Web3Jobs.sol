@@ -32,6 +32,7 @@ contract Web3Jobs {
     mapping(bytes32 => Job) public Jobs;
     mapping(address => mapping(bytes32 => Stage[2])) public Applicants;
     mapping(address => bytes32[]) public Employers;
+    mapping(address => mapping(IERC20 => uint256)) public ERC20BountyBalances;
 
     event JobPublished(
         bytes32 indexed jobId,
@@ -58,7 +59,13 @@ contract Web3Jobs {
                 bountyAmount != 0 && token != IERC20(address(0)),
                 "Wrong amount or token provided for bounty"
             );
+
             amount = bountyAmount;
+            require(
+                token.transfer(address(this), bountyAmount),
+                "Failed to send ERC20 bounty to contract for custody"
+            );
+            ERC20BountyBalances[msg.sender][token] += bountyAmount;
         }
 
         address[] memory applicants;
@@ -76,6 +83,14 @@ contract Web3Jobs {
             "Offer doesn't exist or you're not the employer"
         );
         delete Jobs[jobId];
+
+        Bounty memory bounty = Jobs[jobId].bounty;
+        ERC20BountyBalances[msg.sender][bounty.token] -= bounty.amount;
+        require(
+            (bounty.token).transfer(msg.sender, bounty.amount),
+            "Failed to send ERC20 bounty to employer"
+        );
+
         emit JobUnpublished(jobId, msg.sender);
     }
 
@@ -139,12 +154,12 @@ contract Web3Jobs {
             require(success, "Failed to send Ether");
             isEther = true;
         } else {
-            bool success = bounty.token.transferFrom(
-                msg.sender,
-                address(this),
-                bountySlice
+            address employer = Jobs[jobId].employer;
+            ERC20BountyBalances[employer][bounty.token] -= bountySlice;
+            require(
+                (bounty.token).transfer(msg.sender, bountySlice),
+                "Failed to send ERC20 bounty to applicant"
             );
-            require(success, "Failed to send ERC-20 Token");
         }
 
         emit BountyClaimed(jobId, msg.sender, bountySlice, isEther);

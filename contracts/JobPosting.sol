@@ -30,6 +30,11 @@ contract JobPosting is JobCore {
                 "Wrong amount or token provided for bounty"
             );
             amount = bountyAmount;
+            require(
+                token.transfer(address(this), bountyAmount),
+                "Failed to send ERC20 bounty to contract for custody"
+            );
+            ERC20BountyBalances[msg.sender][token] += bountyAmount;
         }
 
         address[] memory applicants;
@@ -47,6 +52,14 @@ contract JobPosting is JobCore {
             "Offer doesn't exist or you're not the employer"
         );
         delete Jobs[jobId];
+
+        Bounty memory bounty = Jobs[jobId].bounty;
+        ERC20BountyBalances[msg.sender][bounty.token] -= bounty.amount;
+        require(
+            (bounty.token).transfer(msg.sender, bounty.amount),
+            "Failed to send ERC20 bounty to employer"
+        );
+
         emit JobUnpublished(jobId, msg.sender);
     }
 }

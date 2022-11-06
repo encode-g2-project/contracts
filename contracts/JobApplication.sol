@@ -64,12 +64,12 @@ contract JobPosting is JobCore {
             require(success, "Failed to send Ether");
             isEther = true;
         } else {
-            bool success = bounty.token.transferFrom(
-                msg.sender,
-                address(this),
-                bountySlice
+            address employer = Jobs[jobId].employer;
+            ERC20BountyBalances[employer][bounty.token] -= bountySlice;
+            require(
+                (bounty.token).transfer(msg.sender, bountySlice),
+                "Failed to send ERC20 bounty to applicant"
             );
-            require(success, "Failed to send ERC-20 Token");
         }
 
         emit BountyClaimed(jobId, msg.sender, bountySlice, isEther);

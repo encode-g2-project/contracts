@@ -32,4 +32,5 @@ contract JobCore {
     mapping(bytes32 => Job) public Jobs;
     mapping(address => mapping(bytes32 => Stage[2])) public Applicants;
     mapping(address => bytes32[]) public Employers;
+    mapping(address => mapping(IERC20 => uint256)) public ERC20BountyBalances;
 }
