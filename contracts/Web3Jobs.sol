@@ -4,6 +4,20 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract Web3Jobs {
+    event BountyClaimed(
+        bytes32 indexed jobId,
+        address indexed applicant,
+        uint256 indexed amount,
+        bool isEther
+    );
+
+    event JobPublished(
+        bytes32 indexed jobId,
+        address indexed employer,
+        uint256 indexed bountyAmount
+    );
+    event JobUnpublished(bytes32 indexed jobId, address indexed employer);
+
     enum Stage {
         SCREENING,
         FIRST_INTERVIEW,
@@ -34,13 +48,6 @@ contract Web3Jobs {
     mapping(address => bytes32[]) public Employers;
     mapping(address => mapping(IERC20 => uint256)) public ERC20BountyBalances;
 
-    event JobPublished(
-        bytes32 indexed jobId,
-        address indexed employer,
-        uint256 indexed bountyAmount
-    );
-    event JobUnpublished(bytes32 indexed jobId, address indexed employer);
-
     function publishJob(
         bytes32 jobId,
         uint256 bountyAmount,
@@ -62,7 +69,7 @@ contract Web3Jobs {
 
             amount = bountyAmount;
             require(
-                token.transfer(address(this), bountyAmount),
+                token.transferFrom(msg.sender, address(this), bountyAmount),
                 "Failed to send ERC20 bounty to contract for custody"
             );
             ERC20BountyBalances[msg.sender][token] += bountyAmount;
@@ -82,24 +89,23 @@ contract Web3Jobs {
             Jobs[jobId].employer == msg.sender,
             "Offer doesn't exist or you're not the employer"
         );
-        delete Jobs[jobId];
 
         Bounty memory bounty = Jobs[jobId].bounty;
-        ERC20BountyBalances[msg.sender][bounty.token] -= bounty.amount;
-        require(
-            (bounty.token).transfer(msg.sender, bounty.amount),
-            "Failed to send ERC20 bounty to employer"
-        );
 
+        if (bounty.token == IERC20(address(0))) {
+            (bool sent, ) = msg.sender.call{value: bounty.amount}("");
+            require(sent, "Failed to send Ether bounty to employer");
+        } else {
+            ERC20BountyBalances[msg.sender][bounty.token] -= bounty.amount;
+            require(
+                (bounty.token).transfer(msg.sender, bounty.amount),
+                "Failed to send ERC20 bounty to employer"
+            );
+        }
+
+        delete Jobs[jobId];
         emit JobUnpublished(jobId, msg.sender);
     }
-
-    event BountyClaimed(
-        bytes32 indexed jobId,
-        address indexed applicant,
-        uint256 indexed amount,
-        bool isEther
-    );
 
     function newApplication(bytes32 jobId) public {
         require(
@@ -141,24 +147,22 @@ contract Web3Jobs {
             "Not eligible for claiming bounty"
         );
 
-        // TODO: Bounty can only be claimed upon employer approval
-
         bool isEther;
         Bounty memory bounty = Jobs[jobId].bounty;
 
-        uint256 numberOfEligible = getEligible(jobId);
+        uint256 numberOfEligible = getEligibles(jobId);
         uint256 bountySlice = bounty.amount / numberOfEligible;
 
         if (bounty.token == IERC20(address(0))) {
-            (bool success, ) = address(this).call{value: bountySlice}("");
-            require(success, "Failed to send Ether");
+            (bool success, ) = msg.sender.call{value: bountySlice}("");
+            require(success, "Failed to send Ether bounty slice to applicant");
             isEther = true;
         } else {
             address employer = Jobs[jobId].employer;
             ERC20BountyBalances[employer][bounty.token] -= bountySlice;
             require(
                 (bounty.token).transfer(msg.sender, bountySlice),
-                "Failed to send ERC20 bounty to applicant"
+                "Failed to send ERC20 bounty slice to applicant"
             );
         }
 
@@ -173,17 +177,17 @@ contract Web3Jobs {
         return false;
     }
 
-    function getEligible(bytes32 jobId) internal view returns (uint256) {
+    function getEligibles(bytes32 jobId) internal view returns (uint256) {
         address[] memory applicants = (Jobs[jobId].applicants);
 
-        uint256 eligible;
+        uint256 eligibles;
         for (uint256 i; i < applicants.length; i++) {
             if (
                 (Applicants[applicants[i]][jobId])[0] == Stage.REJECTED &&
                 (Applicants[applicants[i]][jobId])[1] == Stage.FINAL_INTERVIEW
-            ) eligible += 1;
+            ) eligibles += 1;
         }
 
-        return eligible;
+        return eligibles;
     }
 }

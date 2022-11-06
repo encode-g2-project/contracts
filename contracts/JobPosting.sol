@@ -31,7 +31,7 @@ contract JobPosting is JobCore {
             );
             amount = bountyAmount;
             require(
-                token.transfer(address(this), bountyAmount),
+                token.transferFrom(msg.sender, address(this), bountyAmount),
                 "Failed to send ERC20 bounty to contract for custody"
             );
             ERC20BountyBalances[msg.sender][token] += bountyAmount;
@@ -51,15 +51,21 @@ contract JobPosting is JobCore {
             Jobs[jobId].employer == msg.sender,
             "Offer doesn't exist or you're not the employer"
         );
-        delete Jobs[jobId];
 
         Bounty memory bounty = Jobs[jobId].bounty;
-        ERC20BountyBalances[msg.sender][bounty.token] -= bounty.amount;
-        require(
-            (bounty.token).transfer(msg.sender, bounty.amount),
-            "Failed to send ERC20 bounty to employer"
-        );
 
+        if (bounty.token == IERC20(address(0))) {
+            (bool sent, ) = msg.sender.call{value: bounty.amount}("");
+            require(sent, "Failed to send Ether bounty to employer");
+        } else {
+            ERC20BountyBalances[msg.sender][bounty.token] -= bounty.amount;
+            require(
+                (bounty.token).transfer(msg.sender, bounty.amount),
+                "Failed to send ERC20 bounty to employer"
+            );
+        }
+
+        delete Jobs[jobId];
         emit JobUnpublished(jobId, msg.sender);
     }
 }
