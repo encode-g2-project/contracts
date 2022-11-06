@@ -4,9 +4,6 @@ pragma solidity ^0.8.0;
 import "./JobCore.sol"; 
 
 contract JobPosting is JobCore {
-    // enum State {SCREENING, FIRST_INTERVIEW, TECHNICAL_TEST, FINAL_INTERVIEW, HIRED, REJECTED}
-    // State public currentState;
-
     function newApplcation(bytes32 jobid) public {
         require(!checkApplicantExists(jobid, msg.sender), "You have already made an application");
         Job memory p = Jobs[jobid];
@@ -14,16 +11,36 @@ contract JobPosting is JobCore {
         Jobs[jobid] = Job(jobid, p.employer, p.rolesToFill, p.applicants, p.token, p.bountyAmount, p.bountySent);
     }
 
-    function getMyApplications() public view returns (bytes32[] memory) {}
+    function getMyApplications() public view returns (bytes32[] memory) {
+        Job[] memory rec = new Job[]();
+        for (uint i=0; i < Job.length; i++ ) {
+            if (msg.sender == p.applicants[i]) {
+                return true;
+            }
+        }
+        
+        // SOLUTION 1
+        // 1. LOOP JOBID's in JOB struct
+        // 2. LOOP checkApplicantExists
+        // 3. return applicants
+
+        // SOLUTION 2
+        // 1. nested mapping (address => mapping (bytes32 => bool))
+
+        //Job memory a = Applicant[msg.sender];
+        //return a.jobid;
+    }
 
     function getMyApplicants(bytes32 jobid) public view returns (address[] memory) {
         Job memory p = Jobs[jobid];
         return p.applicants;
     }
 
+    function getMyJobs() public {}
+
     function changeApplicationStatus(address applicantAddress, bytes32 jobid, string memory status) public {
         // Several ways to do this:
-        // OPTION 1: Delcare enum state with predefined stages
+        // OPTION 1: Declare enum state with predefined stages
         // OPTION 2: Replace custom status with other custom status (defined by employer)
     }
 

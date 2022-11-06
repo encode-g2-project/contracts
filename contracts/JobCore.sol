@@ -5,6 +5,10 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract JobCore { 
     // enum LocationSate {REMOTE, HYBRID, IN_PERSON}
+    // enum StageState {SCREENING, FIRST_INTERVIEW, TECHNICAL_TEST, FINAL_INTERVIEW, HIRED, REJECTED}
+    
+    // LocationSate public currentState;
+    // StageState public currentState;
 
     struct Job {
         bytes32 jobid;
@@ -20,6 +24,7 @@ contract JobCore {
     }
 
     mapping (bytes32 => Job) Jobs;
+    mapping (address => Job) Applicant;
 
     function checkApplicantExists(bytes32 jobid, address applicantAddress) internal view returns (bool){
         Job memory p = Jobs[jobid];
