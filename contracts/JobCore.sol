@@ -3,36 +3,33 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract JobCore { 
-    // enum LocationSate {REMOTE, HYBRID, IN_PERSON}
-    // enum StageState {SCREENING, FIRST_INTERVIEW, TECHNICAL_TEST, FINAL_INTERVIEW, HIRED, REJECTED}
-    
-    // LocationSate public currentState;
-    // StageState public currentState;
+contract JobCore {
+    enum Stage {
+        SCREENING,
+        FIRST_INTERVIEW,
+        TECHNICAL_TEST,
+        FINAL_INTERVIEW,
+        HIRED,
+        REJECTED
+    }
+
+    struct Bounty {
+        IERC20 token;
+        uint256 amount;
+    }
 
     struct Job {
-        bytes32 jobid;
+        bytes32 jobId;
         address employer;
-        uint256 rolesToFill;
         address[] applicants;
-        IERC20 token;
-        uint256 bountyAmount;
-        bool bountySent;
-        // string title;
-        // string description;
-        // LocationSate currentState;
+        Bounty bounty;
     }
 
-    mapping (bytes32 => Job) Jobs;
-    mapping (address => Job) Applicant;
+    address constant USDT = 0xdAC17F958D2ee523a2206206994597C13D831ec7;
+    address constant DAI = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
+    address constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
 
-    function checkApplicantExists(bytes32 jobid, address applicantAddress) internal view returns (bool){
-        Job memory p = Jobs[jobid];
-        for (uint i=0; i < p.applicants.length; i++ ) {
-            if (applicantAddress == p.applicants[i]) {
-                return true;
-            }
-        }
-        return false;
-    }
+    mapping(bytes32 => Job) public Jobs;
+    mapping(address => mapping(bytes32 => Stage[2])) public Applicants;
+    mapping(address => bytes32[]) public Employers;
 }
