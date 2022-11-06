@@ -59,6 +59,8 @@ contract JobPosting is JobCore {
         uint256 numberOfEligible = getEligible(jobId);
         uint256 bountySlice = bounty.amount / numberOfEligible;
 
+        // Withdraw bountySlice from aave to pay back on msg.sender
+        withdrawBounty(bounty.token, bountySlice);
         if (bounty.token == IERC20(address(0))) {
             (bool success, ) = address(this).call{value: bountySlice}("");
             require(success, "Failed to send Ether");

@@ -18,6 +18,7 @@ contract JobPosting is JobCore {
     ) external payable {
         uint256 amount;
 
+        // TODO: External call should be moved to the last statement of this method
         if (msg.value != 0) {
             require(
                 bountyAmount == 0 && token == IERC20(address(0)),
@@ -37,6 +38,8 @@ contract JobPosting is JobCore {
         Jobs[jobId] = Job(jobId, msg.sender, applicants, bounty);
 
         Employers[msg.sender].push(jobId);
+        // Supply bounty amount on AAVE
+        collectBounty(bounty.token, bounty.amount);
 
         emit JobPublished(jobId, msg.sender, amount);
     }
