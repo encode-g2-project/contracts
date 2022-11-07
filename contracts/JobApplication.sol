@@ -44,6 +44,14 @@ contract JobPosting is JobCore {
         (Applicants[applicant][jobId])[0] = Stage(status);
     }
 
+    function closeJobOffer(bytes32 jobId) external {
+        require(
+            Jobs[jobId].employer == msg.sender,
+            "Offer doesn't exist or you're not the employer"
+        );
+        Jobs[jobId].status = false;
+    }
+
     function claimBounty(bytes32 jobId) external {
         require(
             (Applicants[msg.sender][jobId])[0] == Stage.REJECTED &&
@@ -56,22 +64,22 @@ contract JobPosting is JobCore {
         bool isEther;
         Bounty memory bounty = Jobs[jobId].bounty;
 
-        uint256 numberOfEligible = getEligible(jobId);
+        uint256 numberOfEligible = getEligibles(jobId);
         uint256 bountySlice = bounty.amount / numberOfEligible;
 
         // Withdraw bountySlice from aave to pay back on msg.sender
         withdrawBounty(bounty.token, bountySlice);
         if (bounty.token == IERC20(address(0))) {
-            (bool success, ) = address(this).call{value: bountySlice}("");
-            require(success, "Failed to send Ether");
+            (bool success, ) = msg.sender.call{value: bountySlice}("");
+            require(success, "Failed to send Ether bounty slice to applicant");
             isEther = true;
         } else {
-            bool success = bounty.token.transferFrom(
-                msg.sender,
-                address(this),
-                bountySlice
+            address employer = Jobs[jobId].employer;
+            ERC20BountyBalances[employer][bounty.token] -= bountySlice;
+            require(
+                (bounty.token).transfer(msg.sender, bountySlice),
+                "Failed to send ERC20 bounty slice to applicant"
             );
-            require(success, "Failed to send ERC-20 Token");
         }
 
         emit BountyClaimed(jobId, msg.sender, bountySlice, isEther);
@@ -85,17 +93,17 @@ contract JobPosting is JobCore {
         return false;
     }
 
-    function getEligible(bytes32 jobId) internal view returns (uint256) {
+    function getEligibles(bytes32 jobId) internal view returns (uint256) {
         address[] memory applicants = (Jobs[jobId].applicants);
 
-        uint256 eligible;
+        uint256 eligibles;
         for (uint256 i; i < applicants.length; i++) {
             if (
                 (Applicants[applicants[i]][jobId])[0] == Stage.REJECTED &&
                 (Applicants[applicants[i]][jobId])[1] == Stage.FINAL_INTERVIEW
-            ) eligible += 1;
+            ) eligibles += 1;
         }
 
-        return eligible;
+        return eligibles;
     }
 }
