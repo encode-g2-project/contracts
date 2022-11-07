@@ -35,11 +35,12 @@ contract JobPosting is JobCore {
                 "Failed to send ERC20 bounty to contract for custody"
             );
             ERC20BountyBalances[msg.sender][token] += bountyAmount;
+            JobIds.push(jobId);
         }
 
         address[] memory applicants;
         Bounty memory bounty = Bounty(token, amount);
-        Jobs[jobId] = Job(jobId, msg.sender, applicants, bounty);
+        Jobs[jobId] = Job(jobId, msg.sender, applicants, bounty, true);
 
         Employers[msg.sender].push(jobId);
 

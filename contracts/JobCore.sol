@@ -23,12 +23,10 @@ contract JobCore {
         address employer;
         address[] applicants;
         Bounty bounty;
+        bool status;
     }
 
-    address constant USDT = 0xdAC17F958D2ee523a2206206994597C13D831ec7;
-    address constant DAI = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
-    address constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
-
+    bytes32[] public JobIds;
     mapping(bytes32 => Job) public Jobs;
     mapping(address => mapping(bytes32 => Stage[2])) public Applicants;
     mapping(address => bytes32[]) public Employers;

@@ -44,6 +44,14 @@ contract JobPosting is JobCore {
         (Applicants[applicant][jobId])[0] = Stage(status);
     }
 
+    function closeJobOffer(bytes32 jobId) external {
+        require(
+            Jobs[jobId].employer == msg.sender,
+            "Offer doesn't exist or you're not the employer"
+        );
+        Jobs[jobId].status = false;
+    }
+
     function claimBounty(bytes32 jobId) external {
         require(
             (Applicants[msg.sender][jobId])[0] == Stage.REJECTED &&
