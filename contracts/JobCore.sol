@@ -36,13 +36,14 @@ contract JobCore {
     mapping(address => bytes32[]) public Employers;
     mapping(address => mapping(IERC20 => uint256)) public ERC20BountyBalances;
     
-    address public readonly aavePoolAddress; //Lending Pool address for the Aave v3
-    address public readonly aaveWethGatewayAddress; // //IWETHGateway interface in case we don't have an erc20 token from employer, we can still use ETH
-    address public readonly aWethAddress; //Contract Address for the aWeth tokens generated after depositing ETH to keep track of the amount deposited in lending pool
-    mapping(bytes32 => address) private readonly erc20ToAaveTokenAddresses; // map token.symbol with aERC20Token address => USDT,USDC,DAI,EURS
+    address public immutable aavePoolAddress; //Lending Pool address for the Aave v3
+    address public immutable aaveWethGatewayAddress; // //IWETHGateway interface in case we don't have an erc20 token from employer, we can still use ETH
+    address public immutable aWethAddress; //Contract Address for the aWeth tokens generated after depositing ETH to keep track of the amount deposited in lending pool
+    mapping(bytes32 => address) private immutable erc20ToAaveTokenAddresses; // map token.symbol with aERC20Token address => USDT,USDC,DAI,EURS
 
-    constructor(address _aavePoolAddress, address _aWethAddress, address _aaveWethGatewayAddress, address _aaveUsdcAddress, address _aaveUsdtAddress, address _aaveEurAddress, address _aaveDaiAddress) {
-        aavePoolAddress = _aavePoolAddress);
+    constructor(address _aavePoolAddress, address _aWethAddress, address _aaveWethGatewayAddress, 
+                address _aaveUsdcAddress, address _aaveUsdtAddress, address _aaveEurAddress, address _aaveDaiAddress) {
+        aavePoolAddress = _aavePoolAddress;
         aaveWethGatewayAddress = _aaveWethGatewayAddress;
         aWethAddress = _aWethAddress;
         erc20ToAaveTokenAddresses["USDC"] = _aaveUsdcAddress;
