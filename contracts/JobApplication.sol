@@ -10,8 +10,18 @@ contract JobApplication is JobCore {
         uint256 indexed amount,
         bool isEther
     );
-    constructor(address _aavePoolAddressRegistryAddress, address _aaveWethGatewayAddress, address _aWethGatewayAddress) JobCore(_aavePoolAddressRegistryAddress, _aaveWethGatewayAddress, _aWethGatewayAddress) {
-    }
+
+    constructor(
+        address _aavePoolAddressRegistryAddress,
+        address _aaveWethGatewayAddress,
+        address _aWethGatewayAddress
+    )
+        JobCore(
+            _aavePoolAddressRegistryAddress,
+            _aaveWethGatewayAddress,
+            _aWethGatewayAddress
+        )
+    {}
 
     function newApplication(bytes32 jobId) public {
         require(
@@ -57,7 +67,8 @@ contract JobApplication is JobCore {
     function claimBounty(bytes32 jobId) external {
         require(
             (Applicants[msg.sender][jobId])[0] == Stage.REJECTED &&
-                (Applicants[msg.sender][jobId])[1] == Stage.FINAL_INTERVIEW,
+                (Applicants[msg.sender][jobId])[1] == Stage.FINAL_INTERVIEW &&
+                !Jobs[jobId].status,
             "Not eligible for claiming bounty"
         );
 

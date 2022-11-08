@@ -10,8 +10,19 @@ contract JobPosting is JobCore {
         uint256 indexed bountyAmount
     );
     event JobUnpublished(bytes32 indexed jobId, address indexed employer);
-    constructor(address _aavePoolAddressRegistryAddress, address _aaveWethGatewayAddress, address _aWethGatewayAddress) JobCore(_aavePoolAddressRegistryAddress, _aaveWethGatewayAddress, _aWethGatewayAddress) {
-    }
+
+    constructor(
+        address _aavePoolAddressRegistryAddress,
+        address _aaveWethGatewayAddress,
+        address _aWethGatewayAddress
+    )
+        JobCore(
+            _aavePoolAddressRegistryAddress,
+            _aaveWethGatewayAddress,
+            _aWethGatewayAddress
+        )
+    {}
+
     function publishJob(
         bytes32 jobId,
         uint256 bountyAmount,
@@ -37,8 +48,10 @@ contract JobPosting is JobCore {
                 "Failed to send ERC20 bounty to contract for custody"
             );
             ERC20BountyBalances[msg.sender][token] += bountyAmount;
-            JobIds.push(jobId);
         }
+
+        JobIds.push(jobId);
+        JobIdsLength += 1;
 
         address[] memory applicants;
         Bounty memory bounty = Bounty(token, amount);
@@ -69,6 +82,8 @@ contract JobPosting is JobCore {
                 "Failed to send ERC20 bounty to employer"
             );
         }
+
+        JobIdsLength -= 1;
 
         delete Jobs[jobId];
         emit JobUnpublished(jobId, msg.sender);

@@ -60,6 +60,7 @@ contract Web3Jobs {
     }
 
     bytes32[] public JobIds;
+    uint256 public JobIdsLength;
     mapping(bytes32 => Job) public Jobs;
     mapping(address => mapping(bytes32 => Stage[2])) public Applicants;
     mapping(address => bytes32[]) public Employers;
@@ -70,8 +71,14 @@ contract Web3Jobs {
     address public immutable aaveWethGatewayAddress; // //IWETHGateway interface in case we don't have an erc20 token from employer, we can still use ETH
     address public immutable aWethTokenAddress; //Contract Address for the aWeth tokens generated after depositing ETH to keep track of the amount deposited in lending pool
 
-    constructor(address _aavePoolAddressRegistryAddress, address _aaveWethGatewayAddress, address _aWethTokenAddress) {
-        aavePoolAddress = IPoolAddressesProvider(_aavePoolAddressRegistryAddress).getPool();
+    constructor(
+        address _aavePoolAddressRegistryAddress,
+        address _aaveWethGatewayAddress,
+        address _aWethTokenAddress
+    ) {
+        aavePoolAddress = IPoolAddressesProvider(
+            _aavePoolAddressRegistryAddress
+        ).getPool();
         aaveWethGatewayAddress = _aaveWethGatewayAddress;
         aWethTokenAddress = _aWethTokenAddress;
     }
@@ -101,8 +108,10 @@ contract Web3Jobs {
                 "Failed to send ERC20 bounty to contract for custody"
             );
             ERC20BountyBalances[msg.sender][token] += bountyAmount;
-            JobIds.push(jobId);
         }
+
+        JobIds.push(jobId);
+        JobIdsLength += 1;
 
         address[] memory applicants;
         Bounty memory bounty = Bounty(token, amount);
@@ -133,6 +142,8 @@ contract Web3Jobs {
                 "Failed to send ERC20 bounty to employer"
             );
         }
+
+        JobIdsLength -= 1;
 
         delete Jobs[jobId];
         emit JobUnpublished(jobId, msg.sender);
@@ -182,7 +193,8 @@ contract Web3Jobs {
     function claimBounty(bytes32 jobId) external {
         require(
             (Applicants[msg.sender][jobId])[0] == Stage.REJECTED &&
-                (Applicants[msg.sender][jobId])[1] == Stage.FINAL_INTERVIEW,
+                (Applicants[msg.sender][jobId])[1] == Stage.FINAL_INTERVIEW &&
+                !Jobs[jobId].status,
             "Not eligible for claiming bounty"
         );
 
@@ -232,45 +244,75 @@ contract Web3Jobs {
         return eligibles;
     }
 
-    function collectBounty(address token, uint256 amount) internal returns (bool) {
-        if(token == address(0)) {
+    function collectBounty(address token, uint256 amount)
+        internal
+        returns (bool)
+    {
+        if (token == address(0)) {
             // Use WETHGateway to directly deposit eth
-            IWETHGateway(aaveWethGatewayAddress).depositETH{value: amount}(aavePoolAddress, address(this), 0);
-           return true;
+            IWETHGateway(aaveWethGatewayAddress).depositETH{value: amount}(
+                aavePoolAddress,
+                address(this),
+                0
+            );
+            return true;
         }
         string memory _symbol = ERC20(token).symbol();
-        if(!isEqualStrings(_symbol,"USDT") && !isEqualStrings(_symbol,"EURS") && !isEqualStrings(_symbol,"USDC") && !isEqualStrings(_symbol,"DAI")) {
+        if (
+            !isEqualStrings(_symbol, "USDT") &&
+            !isEqualStrings(_symbol, "EURS") &&
+            !isEqualStrings(_symbol, "USDC") &&
+            !isEqualStrings(_symbol, "DAI")
+        ) {
             revert Web3Jobs__NotSupportedToken();
         }
-        // 1. Approve Aave pool to access amount from this contract 
+        // 1. Approve Aave pool to access amount from this contract
         IERC20(token).approve(aavePoolAddress, amount);
 
         // 2. Supply amount to Aave pool
         IPool(aavePoolAddress).supply(token, amount, address(this), 0);
         return true;
+    }
 
-    }    
-
-    function withdrawBounty(address token, uint256 amount) internal returns (bool) {
-        if(token == address(0)) {
+    function withdrawBounty(address token, uint256 amount)
+        internal
+        returns (bool)
+    {
+        if (token == address(0)) {
             //Withdraw lended funds via the Weth Gateway
             //It will convert back the WETH to ETH and send it to the contract
             //Ensure you set the relevant ERC20 allowance of aWETH, before calling
-            IERC20(aWethTokenAddress).approve(address(aaveWethGatewayAddress), amount);
-            IWETHGateway(aaveWethGatewayAddress).withdrawETH(aavePoolAddress, amount, address(this));
-           return true;
+            IERC20(aWethTokenAddress).approve(
+                address(aaveWethGatewayAddress),
+                amount
+            );
+            IWETHGateway(aaveWethGatewayAddress).withdrawETH(
+                aavePoolAddress,
+                amount,
+                address(this)
+            );
+            return true;
         }
         string memory _symbol = ERC20(token).symbol();
-        if(!isEqualStrings(_symbol,"USDT") && !isEqualStrings(_symbol,"EURS") && !isEqualStrings(_symbol,"USDC") && !isEqualStrings(_symbol,"DAI")) {
+        if (
+            !isEqualStrings(_symbol, "USDT") &&
+            !isEqualStrings(_symbol, "EURS") &&
+            !isEqualStrings(_symbol, "USDC") &&
+            !isEqualStrings(_symbol, "DAI")
+        ) {
             revert Web3Jobs__NotSupportedToken();
         }
-        // Withdraw the bounty to this address before 
+        // Withdraw the bounty to this address before
         IPool(aavePoolAddress).withdraw(token, amount, address(this));
 
         return true;
     }
 
-    function isEqualStrings(string memory a, string memory b) public pure returns (bool) {
+    function isEqualStrings(string memory a, string memory b)
+        public
+        pure
+        returns (bool)
+    {
         return keccak256(abi.encodePacked(a)) == keccak256(abi.encodePacked(b));
     }
 }

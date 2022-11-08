@@ -1,8 +1,9 @@
 import { ethers } from "hardhat";
+import { networkConfig } from "../helper-hardhat.config";
 
 async function main() {
   const Web3Jobs = await ethers.getContractFactory("Web3Jobs");
-  const web3jobs = await Web3Jobs.deploy();
+  const web3jobs = await Web3Jobs.deploy(networkConfig[5].aavePoolAddressRegistryAddress,networkConfig[5].aaveWethGatewayAddress,networkConfig[5].aWethTokenAddress);
 
   await web3jobs.deployed();
 
