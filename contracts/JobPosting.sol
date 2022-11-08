@@ -10,7 +10,8 @@ contract JobPosting is JobCore {
         uint256 indexed bountyAmount
     );
     event JobUnpublished(bytes32 indexed jobId, address indexed employer);
-
+    constructor(address _aavePoolAddressRegistryAddress, address _aaveWethGatewayAddress, address _aWethGatewayAddress) JobCore(_aavePoolAddressRegistryAddress, _aaveWethGatewayAddress, _aWethGatewayAddress) {
+    }
     function publishJob(
         bytes32 jobId,
         uint256 bountyAmount,
@@ -45,7 +46,7 @@ contract JobPosting is JobCore {
 
         Employers[msg.sender].push(jobId);
         // Supply bounty amount on AAVE
-        collectBounty(bounty.token, bounty.amount);
+        collectBounty(address(bounty.token), bounty.amount);
 
         emit JobPublished(jobId, msg.sender, amount);
     }

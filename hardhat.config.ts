@@ -5,11 +5,15 @@ dotenv.config();
 import "./tasks/index";
 
 const config: HardhatUserConfig = {
-  solidity: "0.8.17",
+  defaultNetwork: "hardhat",
+  solidity: "0.8.10",
   paths: { tests: "tests" },
   networks: {
     "truffle-dashboard": {
       url: "http://localhost:24012/rpc",
+    },
+    hardhat: {
+      chainId: 31337,
     },
   },
   etherscan: {
