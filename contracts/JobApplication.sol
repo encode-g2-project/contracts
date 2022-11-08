@@ -3,13 +3,15 @@ pragma solidity ^0.8.0;
 
 import "./JobCore.sol";
 
-contract JobPosting is JobCore {
+contract JobApplication is JobCore {
     event BountyClaimed(
         bytes32 indexed jobId,
         address indexed applicant,
         uint256 indexed amount,
         bool isEther
     );
+    constructor(address _aavePoolAddressRegistryAddress, address _aaveWethGatewayAddress, address _aWethGatewayAddress) JobCore(_aavePoolAddressRegistryAddress, _aaveWethGatewayAddress, _aWethGatewayAddress) {
+    }
 
     function newApplication(bytes32 jobId) public {
         require(
@@ -68,7 +70,7 @@ contract JobPosting is JobCore {
         uint256 bountySlice = bounty.amount / numberOfEligible;
 
         // Withdraw bountySlice from aave to pay back on msg.sender
-        withdrawBounty(bounty.token, bountySlice);
+        withdrawBounty(address(bounty.token), bountySlice);
         if (bounty.token == IERC20(address(0))) {
             (bool success, ) = msg.sender.call{value: bountySlice}("");
             require(success, "Failed to send Ether bounty slice to applicant");
