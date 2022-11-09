@@ -222,7 +222,7 @@ contract Web3Jobs {
         );
         Jobs[jobId].status = false;
     }
-    function getAaveBalance() external {
+    function getAaveBalance() external view returns (uint256) {
         return IERC20(aWethTokenAddress).balanceOf(address(this));
     }
 
