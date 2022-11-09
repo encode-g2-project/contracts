@@ -62,7 +62,9 @@ contract Web3Jobs {
     bytes32[] public JobIds;
     uint256 public JobIdsLength;
     mapping(bytes32 => Job) public Jobs;
+    mapping(bytes32 => uint256) public Hired;
     mapping(address => mapping(bytes32 => Stage[2])) public Applicants;
+    mapping(address => mapping(bytes32 => bool)) public AlreadyClaimed;
     mapping(address => bytes32[]) public MyApplications;
     uint256 public MyApplicationsLength;
     mapping(address => bytes32[]) public Employers;
@@ -93,7 +95,8 @@ contract Web3Jobs {
         return
             (Applicants[applicant][jobId])[0] == Stage.REJECTED &&
             (Applicants[applicant][jobId])[1] == Stage.FINAL_INTERVIEW &&
-            !Jobs[jobId].status;
+            !Jobs[jobId].status &&
+            !AlreadyClaimed[applicant][jobId];
     }
 
     address public immutable aavePoolAddress; //Lending Pool address for the Aave v3
@@ -213,6 +216,9 @@ contract Web3Jobs {
         );
         (Applicants[applicant][jobId])[1] = (Applicants[applicant][jobId])[0];
         (Applicants[applicant][jobId])[0] = Stage(status);
+        if (status == 4) {
+            Hired[jobId] += 1;
+        }
     }
 
     function closeJobOffer(bytes32 jobId) external {
@@ -222,6 +228,7 @@ contract Web3Jobs {
         );
         Jobs[jobId].status = false;
     }
+
     function getAaveBalance() external view returns (uint256) {
         return IERC20(aWethTokenAddress).balanceOf(address(this));
     }
@@ -233,6 +240,7 @@ contract Web3Jobs {
                 !Jobs[jobId].status,
             "Not eligible for claiming bounty"
         );
+        require(!AlreadyClaimed[msg.sender][jobId], "You've already claimed");
 
         bool isEther;
         Bounty memory bounty = Jobs[jobId].bounty;
@@ -255,6 +263,7 @@ contract Web3Jobs {
             );
         }
 
+        AlreadyClaimed[msg.sender][jobId] = true;
         emit BountyClaimed(jobId, msg.sender, bountySlice, isEther);
     }
 

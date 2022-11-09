@@ -48,7 +48,9 @@ contract JobCore {
     bytes32[] public JobIds;
     uint256 public JobIdsLength;
     mapping(bytes32 => Job) public Jobs;
+    mapping(bytes32 => uint256) public Hired;
     mapping(address => mapping(bytes32 => Stage[2])) public Applicants;
+    mapping(address => mapping(bytes32 => bool)) public AlreadyClaimed;
     mapping(address => bytes32[]) public MyApplications;
     uint256 public MyApplicationsLength;
     mapping(address => bytes32[]) public Employers;
@@ -79,7 +81,8 @@ contract JobCore {
         return
             (Applicants[applicant][jobId])[0] == Stage.REJECTED &&
             (Applicants[applicant][jobId])[1] == Stage.FINAL_INTERVIEW &&
-            !Jobs[jobId].status;
+            !Jobs[jobId].status &&
+            !AlreadyClaimed[applicant][jobId];
     }
 
     address public immutable aavePoolAddress; //Lending Pool address for the Aave v3

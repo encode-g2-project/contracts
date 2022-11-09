@@ -56,6 +56,9 @@ contract JobApplication is JobCore {
         );
         (Applicants[applicant][jobId])[1] = (Applicants[applicant][jobId])[0];
         (Applicants[applicant][jobId])[0] = Stage(status);
+        if (status == 4) {
+            Hired[jobId] += 1;
+        }
     }
 
     function closeJobOffer(bytes32 jobId) external {
@@ -73,8 +76,7 @@ contract JobApplication is JobCore {
                 !Jobs[jobId].status,
             "Not eligible for claiming bounty"
         );
-
-        // TODO: Bounty can only be claimed upon employer approval
+        require(!AlreadyClaimed[msg.sender][jobId], "You've already claimed");
 
         bool isEther;
         Bounty memory bounty = Jobs[jobId].bounty;
@@ -97,6 +99,7 @@ contract JobApplication is JobCore {
             );
         }
 
+        AlreadyClaimed[msg.sender][jobId] = true;
         emit BountyClaimed(jobId, msg.sender, bountySlice, isEther);
     }
 
