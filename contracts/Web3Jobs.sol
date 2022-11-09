@@ -222,6 +222,9 @@ contract Web3Jobs {
         );
         Jobs[jobId].status = false;
     }
+    function getAaveBalance() external {
+        return IERC20(aWethTokenAddress).balanceOf(address(this));
+    }
 
     function claimBounty(bytes32 jobId) external {
         require(
