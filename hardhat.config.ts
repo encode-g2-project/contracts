@@ -5,6 +5,7 @@ dotenv.config();
 import "./tasks/index";
 const ALCHEMY_API_KEY = process.env.ALCHEMY_API_KEY;
 const GOERLI_PRIVATE_KEY = process.env.GOERLI_PRIVATE_KEY!;
+// yarn hardhat verify --network goerli 0xA926382F92e3B50C7485453f6eF80370bFD4BE5D 0xc4dCB5126a3AfEd129BC3668Ea19285A9f56D15D 0xd5B55D3Ed89FDa19124ceB5baB620328287b915d 0x27B4692C93959048833f40702b22FE3578E77759
 
 const config: HardhatUserConfig = {
   defaultNetwork: "hardhat",

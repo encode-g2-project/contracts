@@ -226,6 +226,9 @@ contract Web3Jobs {
             Jobs[jobId].employer == msg.sender,
             "Offer doesn't exist or you're not the employer"
         );
+        Bounty memory bounty = Jobs[jobId];
+        // Withdraw bountySlice from aave to pay back on msg.sender
+        withdrawBounty(address(bounty.token), bounty.amount);
         Jobs[jobId].status = false;
     }
 
@@ -248,8 +251,6 @@ contract Web3Jobs {
         uint256 numberOfEligible = getEligibles(jobId);
         uint256 bountySlice = bounty.amount / numberOfEligible;
 
-        // Withdraw bountySlice from aave to pay back on msg.sender
-        withdrawBounty(address(bounty.token), bountySlice);
         if (bounty.token == IERC20(address(0))) {
             (bool success, ) = msg.sender.call{value: bountySlice}("");
             require(success, "Failed to send Ether bounty slice to applicant");
