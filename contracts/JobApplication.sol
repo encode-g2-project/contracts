@@ -25,14 +25,15 @@ contract JobApplication is JobCore {
 
     function newApplication(bytes32 jobId) public {
         require(
-            !applicantExists(jobId),
-            "You have already made an application"
+            !applicantExists(jobId) && Jobs[jobId].status,
+            "You have already made an application or application is not open yet"
         );
         Jobs[jobId].applicants.push(msg.sender);
 
         Stage[2] memory stage;
         stage[0] = Stage.SCREENING;
         Applicants[msg.sender][jobId] = stage;
+        MyApplications[msg.sender].push(jobId);
     }
 
     function getMyApplicants(bytes32 jobId)

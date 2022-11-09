@@ -63,8 +63,21 @@ contract Web3Jobs {
     uint256 public JobIdsLength;
     mapping(bytes32 => Job) public Jobs;
     mapping(address => mapping(bytes32 => Stage[2])) public Applicants;
+    mapping(address => bytes32[]) public MyApplications;
     mapping(address => bytes32[]) public Employers;
     mapping(address => mapping(IERC20 => uint256)) public ERC20BountyBalances;
+
+    function getMyJobs(address employer) external view returns (bytes32[]) {
+        return Employers[employer];
+    }
+
+    function getMyApplications(address applicant)
+        external
+        view
+        returns (bytes32[])
+    {
+        return MyApplications[applicant];
+    }
 
     address public immutable aavePoolAddress; //Lending Pool address for the Aave v3
     IPoolAddressesProvider private immutableAavePoolAddressRegistry;
@@ -151,14 +164,15 @@ contract Web3Jobs {
 
     function newApplication(bytes32 jobId) public {
         require(
-            !applicantExists(jobId),
-            "You have already made an application"
+            !applicantExists(jobId) && Jobs[jobId].status,
+            "You have already made an application or application is not open yet"
         );
         Jobs[jobId].applicants.push(msg.sender);
 
         Stage[2] memory stage;
         stage[0] = Stage.SCREENING;
         Applicants[msg.sender][jobId] = stage;
+        MyApplications[msg.sender].push(jobId);
     }
 
     function getMyApplicants(bytes32 jobId)
