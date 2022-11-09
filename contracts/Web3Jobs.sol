@@ -67,14 +67,18 @@ contract Web3Jobs {
     mapping(address => bytes32[]) public Employers;
     mapping(address => mapping(IERC20 => uint256)) public ERC20BountyBalances;
 
-    function getMyJobs(address employer) external view returns (bytes32[]) {
+    function getMyJobs(address employer)
+        external
+        view
+        returns (bytes32[] memory)
+    {
         return Employers[employer];
     }
 
     function getMyApplications(address applicant)
         external
         view
-        returns (bytes32[])
+        returns (bytes32[] memory)
     {
         return MyApplications[applicant];
     }
