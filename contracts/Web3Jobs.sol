@@ -64,7 +64,9 @@ contract Web3Jobs {
     mapping(bytes32 => Job) public Jobs;
     mapping(address => mapping(bytes32 => Stage[2])) public Applicants;
     mapping(address => bytes32[]) public MyApplications;
+    uint256 public MyApplicationsLength;
     mapping(address => bytes32[]) public Employers;
+    uint256 public EmployersLength;
     mapping(address => mapping(IERC20 => uint256)) public ERC20BountyBalances;
 
     function getMyJobs(address employer)
@@ -81,6 +83,17 @@ contract Web3Jobs {
         returns (bytes32[] memory)
     {
         return MyApplications[applicant];
+    }
+
+    function canClaimBounty(address applicant, bytes32 jobId)
+        external
+        view
+        returns (bool)
+    {
+        return
+            (Applicants[applicant][jobId])[0] == Stage.REJECTED &&
+            (Applicants[applicant][jobId])[1] == Stage.FINAL_INTERVIEW &&
+            !Jobs[jobId].status;
     }
 
     address public immutable aavePoolAddress; //Lending Pool address for the Aave v3
@@ -135,6 +148,7 @@ contract Web3Jobs {
         Jobs[jobId] = Job(jobId, msg.sender, applicants, bounty, true);
 
         Employers[msg.sender].push(jobId);
+        EmployersLength += 1;
         // Supply bounty amount on AAVE
         collectBounty(address(bounty.token), bounty.amount);
 
@@ -177,6 +191,7 @@ contract Web3Jobs {
         stage[0] = Stage.SCREENING;
         Applicants[msg.sender][jobId] = stage;
         MyApplications[msg.sender].push(jobId);
+        MyApplicationsLength += 1;
     }
 
     function getMyApplicants(bytes32 jobId)

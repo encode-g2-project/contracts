@@ -58,6 +58,7 @@ contract JobPosting is JobCore {
         Jobs[jobId] = Job(jobId, msg.sender, applicants, bounty, true);
 
         Employers[msg.sender].push(jobId);
+        EmployersLength += 1;
         // Supply bounty amount on AAVE
         collectBounty(address(bounty.token), bounty.amount);
 

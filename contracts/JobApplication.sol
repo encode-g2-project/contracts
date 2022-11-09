@@ -34,6 +34,7 @@ contract JobApplication is JobCore {
         stage[0] = Stage.SCREENING;
         Applicants[msg.sender][jobId] = stage;
         MyApplications[msg.sender].push(jobId);
+        MyApplicationsLength += 1;
     }
 
     function getMyApplicants(bytes32 jobId)
