@@ -226,7 +226,7 @@ contract Web3Jobs {
             Jobs[jobId].employer == msg.sender,
             "Offer doesn't exist or you're not the employer"
         );
-        Bounty memory bounty = Jobs[jobId];
+        Bounty memory bounty = Jobs[jobId].bounty;
         // Withdraw bountySlice from aave to pay back on msg.sender
         withdrawBounty(address(bounty.token), bounty.amount);
         Jobs[jobId].status = false;
