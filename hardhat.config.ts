@@ -3,6 +3,8 @@ import "@nomicfoundation/hardhat-toolbox";
 import dotenv from "dotenv";
 dotenv.config();
 import "./tasks/index";
+const ALCHEMY_API_KEY = process.env.ALCHEMY_API_KEY;
+const GOERLI_PRIVATE_KEY = process.env.GOERLI_PRIVATE_KEY!;
 
 const config: HardhatUserConfig = {
   defaultNetwork: "hardhat",
@@ -14,6 +16,10 @@ const config: HardhatUserConfig = {
     },
     hardhat: {
       chainId: 31337,
+    },
+    goerli: {
+      url: `https://eth-goerli.alchemyapi.io/v2/${ALCHEMY_API_KEY}`,
+      accounts: [GOERLI_PRIVATE_KEY],
     },
   },
   etherscan: {
